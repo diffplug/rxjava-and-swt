@@ -16,69 +16,51 @@
 package com.diffplug.talks.rxjava_and_swt.examples;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Text;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Widget;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import com.diffplug.common.base.Either;
-import com.diffplug.common.rx.Rx;
-import com.diffplug.common.rx.RxGetter;
+import rx.Observable;
+
 import com.diffplug.common.swt.InteractiveTest;
-import com.diffplug.common.swt.Layouts;
 import com.diffplug.common.swt.SwtRx;
+import com.diffplug.common.swt.jface.Actions;
 
 @Category(InteractiveTest.class)
 public class EventVsFrp {
-	private String msgForValue(int value) {
-		return "Value = " + value;
-	}
-
-	private String msgForError(Exception error) {
-		return "Error = " + error.getMessage();
-	}
-
-	@Test
+	@Test(expected = ClassCastException.class)
 	public void eventBased() {
-		InteractiveTest.testCoat("Event-based example", 20, 0, cmp -> {
-			Text inputField = new Text(cmp, SWT.BORDER | SWT.SINGLE);
-			Label outputField = new Label(cmp, SWT.NONE);
-			inputField.addListener(SWT.Modify, e -> {
-				try {
-					int parsed = Integer.parseInt(inputField.getText());
-					outputField.setText(msgForValue(parsed));
-				} catch (Exception error) {
-					outputField.setText(msgForError(error));
-				}
-			});
-
-			Layouts.setGrid(cmp);
-			Layouts.setGridData(inputField).grabHorizontal();
-			Layouts.setGridData(outputField).grabHorizontal();
+		Widget widget = (Widget) new Object();
+		widget.addListener(SWT.KeyDown, e -> {
+			// this is our chance to react
+			System.out.println("keyCode=" + e.keyCode);
+			// this is how we do filtering
+			if (e.keyCode == 'q') {
+				System.out.println("user wants to leave talk");
+			}
+			// this is how we do mapping
+			int accel = e.keyCode | e.stateMask;
+			String keyPress = Actions.getAcceleratorString(accel);
+			System.out.println(keyPress);
 		});
 	}
 
-	@Test
+	@Test(expected = ClassCastException.class)
 	public void frpBased() {
-		InteractiveTest.testCoat("Event-based example", 20, 0, cmp -> {
-			Text inputField = new Text(cmp, SWT.BORDER | SWT.SINGLE);
-			Label outputField = new Label(cmp, SWT.NONE);
-			RxGetter<Either<Integer, Exception>> value = SwtRx.textImmediate(inputField).map(text -> {
-				try {
-					int parsed = Integer.parseInt(inputField.getText());
-					return Either.createLeft(parsed);
-				} catch (Exception error) {
-					return Either.createRight(error);
-				}
-			});
-			RxGetter<String> message = value.map(either -> {
-				return either.fold(this::msgForValue, this::msgForError);
-			});
-			Rx.subscribe(message, outputField::setText);
-
-			Layouts.setGrid(cmp);
-			Layouts.setGridData(inputField).grabHorizontal();
-			Layouts.setGridData(outputField).grabHorizontal();
+		Widget widget = (Widget) new Object();
+		Observable<Event> keyDownStream = SwtRx.addListener(widget, SWT.KeyDown);
+		keyDownStream.subscribe(e -> {
+			// this is our chance to react
+			System.out.println("keyCode=" + e.keyCode);
+		});
+		// this is how we do filtering
+		keyDownStream.filter(e -> e.keyCode == 'q').subscribe(e -> {
+			System.out.println("user wants to leave talk");
+		});
+		// this is how we do mapping
+		keyDownStream.map(e -> e.keyCode | e.stateMask).subscribe(accel -> {
+			System.out.println(Actions.getAcceleratorString(accel));
 		});
 	}
 }
