@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-Description: RxJava and SWT: Out with Events, in with FRP
+Bundle-DocURL: https://github.com/diffplug/rxjava_and_swt
+Bundle-License: https://github.com/diffplug/rxjava_and_swt/blob/v1.0.0-S
+ NAPSHOT/LICENSE
+Bundle-ManifestVersion: 2
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-SymbolicName: com.diffplug.talks.rxjava_and_swt
+Bundle-Vendor: DiffPlug
+Bundle-Version: 1.0.0.SNAPSHOT
+Import-Package: com.diffplug.common.base;version="[3.3,4)",com.diffplug.
+ common.swt;version="[1.4,2)",com.google.common.base;version="[18.0,19)"
+ ,org.eclipse.swt.graphics,org.eclipse.swt.widgets,rx;version="[1.0,2)",
+ rx.subjects;version="[1.0,2)"
+Private-Package: com.diffplug.talks.rxjava_and_swt
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"
