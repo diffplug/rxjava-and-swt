@@ -17,59 +17,81 @@ package com.diffplug.talks.rxjava_and_swt;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Display;
 
+import com.diffplug.common.rx.RxBox;
 import com.diffplug.common.swt.ControlWrapper;
 
 /** Shows a pane of CbCr at constant Y. */
 public class YCbCrControl extends ControlWrapper.AroundControl<Canvas> {
 	int luminance = 128;
 
+	RxBox<RGB> rgb = RxBox.of(new RGB(0, 0, 0));
+
 	public YCbCrControl(Composite parent) {
 		super(new Canvas(parent, SWT.DOUBLE_BUFFERED));
+		setY(128);
 		wrapped.addListener(SWT.Paint, e -> {
 			Point size = wrapped.getSize();
-
-			double dCbdX = _256 / size.x;
-			double dCrdY = _256 / size.y;
-
-			for (int x = 0; x < size.x; ++x) {
-				int cb = limitFloor(dCbdX * x);
-				for (int y = 0; y < size.y; ++y) {
-					int cr = limitFloor(dCrdY * y);
-					RGB rgb = fromYCbCr(new RGB(luminance, cb, cr));
-					e.gc.setForeground(new Color(e.display, rgb));
-					e.gc.drawPoint(x, y);
-				}
-			}
+			Image img = getMapFor(e.display);
+			e.gc.drawImage(img, 0, 0, _256, _256, 0, 0, size.x, size.y);
+		});
+		wrapped.addListener(SWT.MouseDown, e -> {
+			Point size = wrapped.getSize();
+			int cb = limitInt(e.x * _256 / size.x);
+			int cr = limitInt(e.y * _256 / size.y);
+			rgb.set(fromYCbCr(luminance, cb, cr));
 		});
 	}
 
-	private static final double _256 = 256.0;
-
-	/** Adds a listener to the underlying Canvas. */
-	public void addListener(int eventType, Listener listener) {
-		wrapped.addListener(eventType, listener);
+	public RxBox<RGB> rwColor() {
+		return rgb;
 	}
 
-	/** Returns the RGB value at the given x/y point. */
-	public RGB rgbForPoint(int x, int y) {
-		Point size = wrapped.getSize();
-		int cb = limitInt(256 * x / size.x);
-		int cr = limitInt(256 * y / size.y);
-		return fromYCbCr(luminance, cb, cr);
-	}
+	private static final int _256 = 256;
 
 	/** Sets the luminance value of the pane. */
 	public void setY(int y) {
-		this.luminance = limitInt(y);
+		this.luminance = limitInt(4 * limitRound(y / 4.0));
 		wrapped.redraw();
 	}
 
+	///////////////////////////////////////////////////////
+	// Calculate and cache CbCr map at a given luminance //
+	///////////////////////////////////////////////////////
+	private int lastLuminance = -1;
+	private Image lastImage;
+
+	private Image getMapFor(Display display) {
+		if (luminance == lastLuminance) {
+			return lastImage;
+		}
+		if (lastImage != null) {
+			lastImage.dispose();
+		}
+		lastLuminance = luminance;
+		lastImage = new Image(display, _256, _256);
+		GC gc = new GC(lastImage);
+		for (int x = 0; x < _256; ++x) {
+			for (int y = 0; y < _256; ++y) {
+				RGB rgb = fromYCbCr(new RGB(luminance, x, y));
+				gc.setForeground(new Color(display, rgb));
+				gc.drawPoint(x, y);
+			}
+		}
+		gc.dispose();
+		return lastImage;
+	}
+
+	////////////////////
+	// RGB <--> YCrCb //
+	////////////////////
 	/** Converts an RGB value to YCrCb. */
 	public static RGB toYCbCr(RGB rgb) {
 		return toYCbCr(rgb.red, rgb.green, rgb.blue);
