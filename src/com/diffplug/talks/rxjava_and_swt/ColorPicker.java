@@ -49,35 +49,38 @@ public class ColorPicker extends ControlWrapper.AroundControl<Composite> {
 		RGB initYCbCr = YCbCrControl.toYCbCr(initRGB);
 
 		// create a scale and bind it to an RxBox<Integer>
+		RxBox<Integer> luminance = RxBox.of(initYCbCr.red);
+		
+		// colorpanel in the center
+		YCbCrControl cbcrPanel = new YCbCrControl(wrapped);
+		Rx.subscribe(luminance, cbcrPanel::setY);
+
+		// controls at the right
+		Composite rightCmp = new Composite(wrapped, SWT.NONE);
+
+		// scale below
 		Scale scale = new Scale(wrapped, SWT.HORIZONTAL);
 		scale.setMinimum(0);
 		scale.setMaximum(255);
-		RxBox<Integer> luminance = RxBox.of(initYCbCr.red);
 		Rx.subscribe(luminance, scale::setSelection);
 		scale.addListener(SWT.Selection, e -> {
 			luminance.set(scale.getSelection());
 		});
 
-		// create a color panel
-		YCbCrControl cbcrPanel = new YCbCrControl(wrapped);
-		Rx.subscribe(luminance, cbcrPanel::setY);
-
-		// panel at the bottom
-		Composite bottomCmp = new Composite(wrapped, SWT.NONE);
-		Layouts.setGrid(wrapped);
-		Layouts.setGridData(scale).grabHorizontal();
+		Layouts.setGrid(wrapped).numColumns(2);
 		Layouts.setGridData(cbcrPanel).grabAll();
-		Layouts.setGridData(bottomCmp).grabHorizontal();
+		Layouts.setGridData(rightCmp).grabVertical().verticalSpan(2);
+		Layouts.setGridData(scale).grabHorizontal();
 
 		// populate the bottom
-		Layouts.setGrid(bottomCmp).numColumns(2).margin(0);
-		XkcdLookup xkcdLookup = new XkcdLookup(bottomCmp);
+		Layouts.setGrid(rightCmp).margin(0);
+		XkcdLookup xkcdLookup = new XkcdLookup(rightCmp);
 
-		Group hoverGrp = new Group(bottomCmp, SWT.SHADOW_ETCHED_IN);
+		Group hoverGrp = new Group(rightCmp, SWT.SHADOW_ETCHED_IN);
 		hoverGrp.setText("Hover");
 		createGroup(hoverGrp, cbcrPanel.rxMouseMove(), xkcdLookup);
 
-		Group clickGrp = new Group(bottomCmp, SWT.SHADOW_ETCHED_IN);
+		Group clickGrp = new Group(rightCmp, SWT.SHADOW_ETCHED_IN);
 		clickGrp.setText("Click");
 		createGroup(clickGrp, cbcrPanel.rxMouseDown(), xkcdLookup);
 	}

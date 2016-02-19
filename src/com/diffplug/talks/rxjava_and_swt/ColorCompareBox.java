@@ -22,7 +22,9 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 
+import com.diffplug.common.base.TreeStream;
 import com.diffplug.common.swt.ControlWrapper;
+import com.diffplug.common.swt.Fonts;
 import com.diffplug.common.swt.Layouts;
 import com.diffplug.common.swt.SwtMisc;
 
@@ -55,6 +57,13 @@ public class ColorCompareBox extends ControlWrapper.AroundControl<Composite> {
 
 		nameNearest = new Text(wrapped, SWT.BORDER | SWT.READ_ONLY);
 		Layouts.setGridData(nameNearest).horizontalSpan(2).grabHorizontal();
+
+		// set all fonts to system large
+		TreeStream.breadthFirst(SwtMisc.treeDefControl(), parent)
+			.forEach(ctl -> ctl.setFont(Fonts.systemLarge()));
+
+		rgbActual.setText("                    ");
+		rgbNearest.setText("                    ");
 	}
 
 	public void setActual(RGB rgb) {
