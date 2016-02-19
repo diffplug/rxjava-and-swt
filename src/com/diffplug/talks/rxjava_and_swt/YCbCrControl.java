@@ -24,15 +24,18 @@ import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
 
-import com.diffplug.common.rx.RxBox;
+import rx.Observable;
+
 import com.diffplug.common.swt.ControlWrapper;
+import com.diffplug.common.swt.SwtRx;
 
 /** Shows a pane of CbCr at constant Y. */
 public class YCbCrControl extends ControlWrapper.AroundControl<Canvas> {
 	int luminance = 128;
 
-	RxBox<RGB> rgb = RxBox.of(new RGB(0, 0, 0));
+	final Observable<RGB> mouseDown, mouseMove;
 
 	public YCbCrControl(Composite parent) {
 		super(new Canvas(parent, SWT.DOUBLE_BUFFERED));
@@ -42,16 +45,23 @@ public class YCbCrControl extends ControlWrapper.AroundControl<Canvas> {
 			Image img = getMapFor(e.display);
 			e.gc.drawImage(img, 0, 0, _256, _256, 0, 0, size.x, size.y);
 		});
-		wrapped.addListener(SWT.MouseDown, e -> {
-			Point size = wrapped.getSize();
-			int cb = limitInt(e.x * _256 / size.x);
-			int cr = limitInt(e.y * _256 / size.y);
-			rgb.set(fromYCbCr(luminance, cb, cr));
-		});
+		mouseDown = SwtRx.addListener(wrapped, SWT.MouseDown).map(this::posToColor);
+		mouseMove = SwtRx.addListener(wrapped, SWT.MouseMove).map(this::posToColor);
 	}
 
-	public RxBox<RGB> rwColor() {
-		return rgb;
+	private RGB posToColor(Event e) {
+		Point size = wrapped.getSize();
+		int cb = limitInt(e.x * _256 / size.x);
+		int cr = limitInt(e.y * _256 / size.y);
+		return fromYCbCr(luminance, cb, cr);
+	}
+
+	public Observable<RGB> rxMouseDown() {
+		return mouseDown;
+	}
+
+	public Observable<RGB> rxMouseMove() {
+		return mouseMove;
 	}
 
 	private static final int _256 = 256;
@@ -121,11 +131,6 @@ public class YCbCrControl extends ControlWrapper.AroundControl<Canvas> {
 	/** Rounds and limits to the range 0-255. */
 	private static int limitRound(double value) {
 		return limitInt((int) Math.round(value));
-	}
-
-	/** Floors and limits to the range 0-255. */
-	private static int limitFloor(double value) {
-		return limitInt((int) Math.floor(value));
 	}
 
 	/** Limits to the range 0-255. */

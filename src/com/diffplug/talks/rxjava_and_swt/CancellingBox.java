@@ -15,20 +15,24 @@
  */
 package com.diffplug.talks.rxjava_and_swt;
 
-import org.eclipse.swt.graphics.RGB;
-import org.junit.Test;
+import java.util.concurrent.CompletableFuture;
 
-import com.diffplug.common.swt.InteractiveTest;
-import com.diffplug.common.swt.Layouts;
+import com.diffplug.common.base.Box;
 
-public class ColorPickerTest {
-	/** Feature for picking colors. */
-	@Test
-	public void colorPicker() {
-		final int SCALE = 4;
-		InteractiveTest.testCoat("Selects colors in a fancy way.", 16 * SCALE, 9 * SCALE, cmp -> {
-			Layouts.setFill(cmp).margin(0);
-			new ColorPicker(cmp, new RGB(100, 50, 150));
-		});
+public class CancellingBox<T> extends Box.Default<CompletableFuture<T>> {
+	public CancellingBox() {
+		super(new CompletableFuture<T>());
+	}
+
+	@Override
+	public void set(CompletableFuture<T> obj) {
+		this.obj.cancel(true);
+		this.obj = obj;
+	}
+
+	@SuppressWarnings("unchecked")
+	public <U extends T> CompletableFuture<U> filter(CompletableFuture<U> obj) {
+		set((CompletableFuture<T>) obj);
+		return obj;
 	}
 }
