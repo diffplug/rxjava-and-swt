@@ -2,13 +2,19 @@ buildscript {
 	repositories {
 		mavenLocal()
 		jcenter()
-		configurations.all {
-			resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+		// SNAPSHOT versions are free to rely on other SNAPSHOT libraries
+		if (project.version.endsWith('-SNAPSHOT')) {
+			maven {
+				url 'https://oss.sonatype.org/content/repositories/snapshots/'
+			}
+			configurations.all {
+				resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+			}
 		}
 	}
 
 	dependencies {
-		classpath 'com.diffplug.gradle:goomph:1.1.0-SNAPSHOT'
+		classpath 'com.diffplug.gradle:goomph:1.2.0-SNAPSHOT'
 		classpath "com.diffplug.durian:durian-swt:${VER_DURIAN_SWT}"
 	}
 }
