@@ -22,11 +22,20 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.RGB;
+import org.eclipse.swt.widgets.Widget;
+
+import com.google.common.collect.Maps;
 
 import com.diffplug.common.base.Errors;
 
@@ -76,5 +85,39 @@ public class XkcdColors {
 	/** Returns the color name closest to the given RGB triplet (eventually...). */
 	public Collection<Map.Entry<String, RGB>> all() {
 		return colors.entrySet();
+	}
+
+	public static class Lookup {
+		final XkcdColors colors = load();
+		final ExecutorService executor;
+
+		public Lookup(Widget lifecycle) {
+			this.executor = Executors.newSingleThreadExecutor();
+			lifecycle.addListener(SWT.Dispose, e -> {
+				executor.shutdown();
+			});
+		}
+
+		/** Returns the XkcdColor which is closest to the given RGB. */
+		public CompletionStage<Map.Entry<String, RGB>> get(RGB rgb) {
+			return CompletableFuture.supplyAsync(() -> closestTo(rgb), executor);
+		}
+
+		/** Iterates over all XkcdColor entries to find the closest color by brute-force. */
+		private Map.Entry<String, RGB> closestTo(RGB rgb) {
+			Errors.log().run(() -> Thread.sleep(10));
+			return colors.all().stream()
+					.map(entry -> Maps.immutableEntry(distance(entry.getValue(), rgb), entry))
+					.min(Comparator.comparing(Map.Entry::getKey))
+					.get().getValue();
+		}
+
+		/** Computes the distance-squared between the two colors. */
+		private static int distance(RGB a, RGB b) {
+			int deltaR = a.red - b.red;
+			int deltaG = a.green - b.green;
+			int deltaB = a.blue - b.blue;
+			return (deltaR * deltaR) + deltaG * deltaG + deltaB * deltaB;
+		}
 	}
 }

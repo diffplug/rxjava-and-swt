@@ -9,8 +9,10 @@ Bundle-SymbolicName: com.diffplug.talks.rxjava_and_swt
 Bundle-Vendor: DiffPlug
 Bundle-Version: 1.0.0.SNAPSHOT
 Import-Package: com.diffplug.common.base;version="[3.3,4)",com.diffplug.
- common.swt;version="[1.4,2)",com.google.common.base;version="[18.0,19)"
- ,org.eclipse.swt.graphics,org.eclipse.swt.widgets,rx;version="[1.0,2)",
- rx.subjects;version="[1.0,2)"
+ common.rx;version="[1.2,2)",com.diffplug.common.swt;version="[1.4,2)",c
+ om.google.common.base;version="[18.0,19)",com.google.common.collect;ver
+ sion="[18.0,19)",org.eclipse.swt.graphics,org.eclipse.swt.widgets,rx;ve
+ rsion="[1.0,2)",rx.functions;version="[1.0,2)",rx.subjects;version="[1.
+ 0,2)"
 Private-Package: com.diffplug.talks.rxjava_and_swt
 Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"

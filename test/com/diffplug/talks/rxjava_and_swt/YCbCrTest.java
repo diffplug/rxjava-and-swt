@@ -34,8 +34,8 @@ public class YCbCrTest {
 
 	private void roundTripTestCase(int r, int g, int b) {
 		RGB expected = new RGB(r, g, b);
-		RGB yCbCr = YCbCrControl.toYCbCr(expected);
-		RGB roundTrip = YCbCrControl.fromYCbCr(yCbCr);
+		RGB yCbCr = ColorPicker.toYCbCr(expected);
+		RGB roundTrip = ColorPicker.fromYCbCr(yCbCr);
 		if (!expected.equals(roundTrip)) {
 			// if they don't match exactly, allow a maximum delta of 1 for rounding errors 
 			int deltaR = Math.abs(roundTrip.red - expected.red);

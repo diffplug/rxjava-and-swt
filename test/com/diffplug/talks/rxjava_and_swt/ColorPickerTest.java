@@ -15,20 +15,33 @@
  */
 package com.diffplug.talks.rxjava_and_swt;
 
-import org.eclipse.swt.graphics.RGB;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.Scale;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import com.diffplug.common.swt.InteractiveTest;
 import com.diffplug.common.swt.Layouts;
 
+@Category(InteractiveTest.class)
 public class ColorPickerTest {
-	/** Feature for picking colors. */
 	@Test
-	public void colorPicker() {
-		final int SCALE = 4;
-		InteractiveTest.testCoat("Selects colors in a fancy way.", 16 * SCALE, 9 * SCALE, cmp -> {
-			Layouts.setFill(cmp).margin(0);
-			new ColorPicker(cmp, new RGB(100, 50, 150));
+	public void testControl() {
+		InteractiveTest.testCoat("Should show the YCbCr plane at various values of Y", cmp -> {
+			Layouts.setGrid(cmp);
+
+			Scale scale = new Scale(cmp, SWT.HORIZONTAL);
+			scale.setMinimum(0);
+			scale.setMaximum(255);
+			scale.setSelection(128);
+			Layouts.setGridData(scale).grabHorizontal();
+
+			ColorPicker colors = new ColorPicker(cmp);
+			Layouts.setGridData(colors).grabAll();
+
+			scale.addListener(SWT.Selection, e -> {
+				colors.setY(scale.getSelection());
+			});
 		});
 	}
 }

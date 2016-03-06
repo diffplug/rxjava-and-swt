@@ -28,13 +28,13 @@ import com.diffplug.common.swt.Fonts;
 import com.diffplug.common.swt.Layouts;
 import com.diffplug.common.swt.SwtMisc;
 
-public class ColorCompareBox extends ControlWrapper.AroundControl<Composite> {
+public class ColorComparePanel extends ControlWrapper.AroundControl<Composite> {
 
 	private final Label swatchActual, swatchNearest;
 	private final Text rgbActual, rgbNearest;
 	private final Text nameNearest;
 
-	public ColorCompareBox(Composite parent) {
+	public ColorComparePanel(Composite parent) {
 		super(new Composite(parent, SWT.NONE));
 		Layouts.setGrid(wrapped)
 				.numColumns(2)
@@ -60,7 +60,7 @@ public class ColorCompareBox extends ControlWrapper.AroundControl<Composite> {
 
 		// set all fonts to system large
 		TreeStream.breadthFirst(SwtMisc.treeDefControl(), parent)
-			.forEach(ctl -> ctl.setFont(Fonts.systemLarge()));
+				.forEach(ctl -> ctl.setFont(Fonts.systemLarge()));
 
 		rgbActual.setText("                    ");
 		rgbNearest.setText("                    ");

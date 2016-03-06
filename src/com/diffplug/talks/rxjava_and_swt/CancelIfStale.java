@@ -16,23 +16,21 @@
 package com.diffplug.talks.rxjava_and_swt;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import com.diffplug.common.base.Box;
 
-public class CancellingBox<T> extends Box.Default<CompletableFuture<T>> {
-	public CancellingBox() {
-		super(new CompletableFuture<T>());
-	}
+public class CancelIfStale {
+	private final Box<CompletionStage<?>> delegate = new Box.Default<CompletionStage<?>>(new CompletableFuture<>()) {
+		@Override
+		public void set(CompletionStage<?> obj) {
+			this.obj.toCompletableFuture().cancel(true);
+			this.obj = obj;
+		}
+	};
 
-	@Override
-	public void set(CompletableFuture<T> obj) {
-		this.obj.cancel(true);
-		this.obj = obj;
-	}
-
-	@SuppressWarnings("unchecked")
-	public <U extends T> CompletableFuture<U> filter(CompletableFuture<U> obj) {
-		set((CompletableFuture<T>) obj);
+	public <T> CompletionStage<T> filter(CompletionStage<T> obj) {
+		delegate.set(obj.toCompletableFuture());
 		return obj;
 	}
 }

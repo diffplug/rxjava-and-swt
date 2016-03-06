@@ -15,124 +15,134 @@
  */
 package com.diffplug.talks.rxjava_and_swt;
 
-import java.util.Comparator;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.RGB;
+import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Group;
-import org.eclipse.swt.widgets.Scale;
-import org.eclipse.swt.widgets.Widget;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
 
 import rx.Observable;
 
-import com.google.common.collect.Maps;
-
-import com.diffplug.common.base.Errors;
-import com.diffplug.common.rx.Rx;
-import com.diffplug.common.rx.RxBox;
 import com.diffplug.common.swt.ControlWrapper;
-import com.diffplug.common.swt.Layouts;
-import com.diffplug.common.swt.SwtExec;
+import com.diffplug.common.swt.SwtRx;
 
-public class ColorPicker extends ControlWrapper.AroundControl<Composite> {
-	final RxBox<RGB> rgb = RxBox.of(new RGB(0, 0, 0));
-	final RxBox<RGB> yCbCr = rgb.map(YCbCrControl::toYCbCr, YCbCrControl::fromYCbCr);
-	final XkcdColors xkcd = XkcdColors.load();
+/** Shows a pane of CbCr at constant Y. */
+public class ColorPicker extends ControlWrapper.AroundControl<Canvas>implements ColorPickerApis.Reactive {
+	int luminance = 128;
 
-	public ColorPicker(Composite parent, RGB initRGB) {
-		super(new Composite(parent, SWT.NONE));
-		RGB initYCbCr = YCbCrControl.toYCbCr(initRGB);
+	final Observable<RGB> mouseDown, mouseMove;
 
-		// create a scale and bind it to an RxBox<Integer>
-		RxBox<Integer> luminance = RxBox.of(initYCbCr.red);
-		
-		// colorpanel in the center
-		YCbCrControl cbcrPanel = new YCbCrControl(wrapped);
-		Rx.subscribe(luminance, cbcrPanel::setY);
-
-		// controls at the right
-		Composite rightCmp = new Composite(wrapped, SWT.NONE);
-
-		// scale below
-		Scale scale = new Scale(wrapped, SWT.HORIZONTAL);
-		scale.setMinimum(0);
-		scale.setMaximum(255);
-		Rx.subscribe(luminance, scale::setSelection);
-		scale.addListener(SWT.Selection, e -> {
-			luminance.set(scale.getSelection());
+	public ColorPicker(Composite parent) {
+		super(new Canvas(parent, SWT.DOUBLE_BUFFERED));
+		setY(128);
+		wrapped.addListener(SWT.Paint, e -> {
+			Point size = wrapped.getSize();
+			Image img = getMapFor(e.display);
+			e.gc.drawImage(img, 0, 0, _256, _256, 0, 0, size.x, size.y);
 		});
-
-		Layouts.setGrid(wrapped).numColumns(2);
-		Layouts.setGridData(cbcrPanel).grabAll();
-		Layouts.setGridData(rightCmp).grabVertical().verticalSpan(2);
-		Layouts.setGridData(scale).grabHorizontal();
-
-		// populate the bottom
-		Layouts.setGrid(rightCmp).margin(0);
-		XkcdLookup xkcdLookup = new XkcdLookup(rightCmp);
-
-		Group hoverGrp = new Group(rightCmp, SWT.SHADOW_ETCHED_IN);
-		hoverGrp.setText("Hover");
-		createGroup(hoverGrp, cbcrPanel.rxMouseMove(), xkcdLookup);
-
-		Group clickGrp = new Group(rightCmp, SWT.SHADOW_ETCHED_IN);
-		clickGrp.setText("Click");
-		createGroup(clickGrp, cbcrPanel.rxMouseDown(), xkcdLookup);
+		mouseDown = SwtRx.addListener(wrapped, SWT.MouseDown).map(this::posToColor);
+		mouseMove = SwtRx.addListener(wrapped, SWT.MouseMove).map(this::posToColor);
 	}
 
-	private void createGroup(Composite parent, Observable<RGB> rxRgb, XkcdLookup xkcdLookup) {
-		Layouts.setFill(parent);
-		ColorCompareBox colorCompare = new ColorCompareBox(parent);
-		CancellingBox<Object> cancelling = new CancellingBox<>();
-
-		SwtExec.Guarded guarded = SwtExec.async().guardOn(parent);
-		guarded.subscribe(rxRgb, rgb -> {
-			// set raw
-			colorCompare.setActual(rgb);
-			// clear empty, then start to look for the answer
-			colorCompare.setNearestEmpty();
-			guarded.subscribe(cancelling.filter(xkcdLookup.get(rgb)), entry -> {
-				colorCompare.setNearest(entry.getKey(), entry.getValue());
-			});
-		});
+	private RGB posToColor(Event e) {
+		Point size = wrapped.getSize();
+		int cb = limitInt(e.x * _256 / size.x);
+		int cr = limitInt(e.y * _256 / size.y);
+		return fromYCbCr(luminance, cb, cr);
 	}
 
-	public static class XkcdLookup {
-		final XkcdColors colors = XkcdColors.load();
-		final ExecutorService executor;
+	@Override
+	public Observable<RGB> rxMouseDown() {
+		return mouseDown;
+	}
 
-		public XkcdLookup(Widget lifecycle) {
-			this.executor = Executors.newSingleThreadExecutor();
-			lifecycle.addListener(SWT.Dispose, e -> {
-				executor.shutdown();
-			});
+	@Override
+	public Observable<RGB> rxMouseMove() {
+		return mouseMove;
+	}
+
+	private static final int _256 = 256;
+
+	/** Sets the luminance value of the pane. */
+	public void setY(int y) {
+		this.luminance = limitInt(4 * limitRound(y / 4.0));
+		wrapped.redraw();
+	}
+
+	///////////////////////////////////////////////////////
+	// Calculate and cache CbCr map at a given luminance //
+	///////////////////////////////////////////////////////
+	private int lastLuminance = -1;
+	private Image lastImage;
+
+	private Image getMapFor(Display display) {
+		if (luminance == lastLuminance) {
+			return lastImage;
 		}
-
-		/** Returns the XkcdColor which is closest to the given RGB. */
-		public CompletableFuture<Map.Entry<String, RGB>> get(RGB rgb) {
-			return CompletableFuture.supplyAsync(() -> closestTo(rgb), executor);
+		if (lastImage != null) {
+			lastImage.dispose();
 		}
-
-		/** Iterates over all XkcdColor entries to find the closest color by brute-force. */
-		private Map.Entry<String, RGB> closestTo(RGB rgb) {
-			Errors.log().run(() -> Thread.sleep(10));
-			return colors.all().stream()
-					.map(entry -> Maps.immutableEntry(distance(entry.getValue(), rgb), entry))
-					.min(Comparator.comparing(Map.Entry::getKey))
-					.get().getValue();
+		lastLuminance = luminance;
+		lastImage = new Image(display, _256, _256);
+		GC gc = new GC(lastImage);
+		for (int x = 0; x < _256; ++x) {
+			for (int y = 0; y < _256; ++y) {
+				RGB rgb = fromYCbCr(new RGB(luminance, x, y));
+				gc.setForeground(new Color(display, rgb));
+				gc.drawPoint(x, y);
+			}
 		}
+		gc.dispose();
+		return lastImage;
+	}
 
-		/** Computes the distance-squared between the two colors. */
-		private static int distance(RGB a, RGB b) {
-			int deltaR = a.red - b.red;
-			int deltaG = a.green - b.green;
-			int deltaB = a.blue - b.blue;
-			return (deltaR * deltaR) + deltaG * deltaG + deltaB * deltaB;
+	////////////////////
+	// RGB <--> YCrCb //
+	////////////////////
+	/** Converts an RGB value to YCrCb. */
+	public static RGB toYCbCr(RGB rgb) {
+		return toYCbCr(rgb.red, rgb.green, rgb.blue);
+	}
+
+	/** Converts an RGB value to YCrCb. */
+	public static RGB toYCbCr(double r, double g, double b) {
+		int y = limitRound(0.299 * r + 0.587 * g + 0.114 * b);
+		int cb = limitRound(128 - 0.168736 * r - 0.331264 * g + 0.5 * b);
+		int cr = limitRound(128 + 0.5 * r - 0.418688 * g - 0.081312 * b);
+		return new RGB(y, cb, cr);
+	}
+
+	/** Converts a YCrCb value to RGB. */
+	public static RGB fromYCbCr(RGB YCbCr) {
+		return fromYCbCr(YCbCr.red, YCbCr.green, YCbCr.blue);
+	}
+
+	/** Converts a YCrCb value to RGB. */
+	public static RGB fromYCbCr(double y, double cb, double cr) {
+		int r = limitRound(y + 1.402 * (cr - 128));
+		int g = limitRound(y - 0.34414 * (cb - 128) - 0.71414 * (cr - 128));
+		int b = limitRound(y + 1.772 * (cb - 128));
+		return new RGB(r, g, b);
+	}
+
+	/** Rounds and limits to the range 0-255. */
+	private static int limitRound(double value) {
+		return limitInt((int) Math.round(value));
+	}
+
+	/** Limits to the range 0-255. */
+	private static int limitInt(int value) {
+		if (value < 0) {
+			return 0;
+		} else if (value > 255) {
+			return 255;
+		} else {
+			return value;
 		}
 	}
 }
