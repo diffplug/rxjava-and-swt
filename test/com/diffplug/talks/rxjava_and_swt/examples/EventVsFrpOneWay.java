@@ -22,10 +22,14 @@ import org.eclipse.swt.widgets.Text;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import rx.Observable;
+import rx.subjects.BehaviorSubject;
+
+import com.diffplug.common.base.Either;
 import com.diffplug.common.rx.Rx;
-import com.diffplug.common.rx.RxBox;
 import com.diffplug.common.swt.InteractiveTest;
 import com.diffplug.common.swt.Layouts;
+import com.diffplug.common.swt.SwtRx;
 
 @Category(InteractiveTest.class)
 public class EventVsFrpOneWay {
@@ -71,18 +75,34 @@ public class EventVsFrpOneWay {
 	public static class FrpBased extends IntValue {
 		public FrpBased(Composite parent, int initialValue) {
 			super(parent, initialValue);
-			RxBox<Integer> value = RxBox.of(0);
+			BehaviorSubject<Integer> value = BehaviorSubject.create();
 			inputField.addListener(SWT.Modify, e -> {
 				try {
 					int parsed = Integer.parseInt(inputField.getText());
-					// model the change
-					value.set(parsed);
+					value.onNext(parsed);
 				} catch (Exception error) {
 					outputField.setText(msgForError(error));
 				}
 			});
 			// react to the change
 			Rx.subscribe(value.map(this::msgForValue), outputField::setText);
+		}
+	}
+
+	public static class PureFrpBased extends IntValue {
+		public PureFrpBased(Composite parent, int initialValue) {
+			super(parent, initialValue);
+			Observable<Either<Integer, Exception>> observable = SwtRx.addListener(inputField, SWT.Modify).map(event -> {
+				try {
+					return Either.createLeft(Integer.parseInt(inputField.getText()));
+				} catch (Exception error) {
+					return Either.createRight(error);
+				}
+			});
+			Rx.subscribe(observable, either -> {
+				String msg = either.fold(this::msgForValue, this::msgForError);
+				outputField.setText(msg);
+			});
 		}
 	}
 
@@ -96,6 +116,13 @@ public class EventVsFrpOneWay {
 	@Test
 	public void frpBased() {
 		InteractiveTest.testCoat("FRP-based example", 20, 0, cmp -> {
+			new FrpBased(cmp, 0);
+		});
+	}
+
+	@Test
+	public void pureFrpBased() {
+		InteractiveTest.testCoat("Pure FRP-based example", 20, 0, cmp -> {
 			new FrpBased(cmp, 0);
 		});
 	}
