@@ -19,15 +19,12 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Widget;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
-import rx.Observable;
-
-import com.diffplug.common.swt.InteractiveTest;
 import com.diffplug.common.swt.SwtRx;
 import com.diffplug.common.swt.jface.Actions;
 
-@Category(InteractiveTest.class)
+import rx.Observable;
+
 public class EventVsFrp {
 	@Test(expected = ClassCastException.class)
 	public void eventBased() {
