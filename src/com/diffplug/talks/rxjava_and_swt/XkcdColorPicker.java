@@ -15,6 +15,8 @@
  */
 package com.diffplug.talks.rxjava_and_swt;
 
+import java.util.concurrent.TimeUnit;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Composite;
@@ -81,7 +83,7 @@ public class XkcdColorPicker extends ControlWrapper.AroundControl<Composite> {
 		CancelIfStale cancelling = new CancelIfStale();
 
 		SwtExec.Guarded guarded = SwtExec.async().guardOn(parent);
-		guarded.subscribe(rxRgb, rgb -> {
+		guarded.subscribe(rxRgb.throttleFirst(250, TimeUnit.MILLISECONDS), rgb -> {
 			// set raw
 			colorCompare.setActual(rgb);
 			// clear empty, then start to look for the answer

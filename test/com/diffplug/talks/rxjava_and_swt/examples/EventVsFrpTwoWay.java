@@ -16,6 +16,7 @@
 package com.diffplug.talks.rxjava_and_swt.examples;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Scale;
@@ -81,14 +82,16 @@ public class EventVsFrpTwoWay {
 			});
 
 			scale.addListener(SWT.Selection, e -> {
-				inputField.setText(Integer.toString(scale.getTextDirection()));
+				setValue(scale.getSelection());
 			});
 		}
 
 		public void setValue(int value) {
 			if (this.value != value) {
 				this.value = value;
+				Point caretPos = inputField.getSelection();
 				inputField.setText(Integer.toString(value));
+				inputField.setSelection(caretPos);
 				outputField.setText(msgForValue(value));
 				scale.setSelection(value);
 			}
