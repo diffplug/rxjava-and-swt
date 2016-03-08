@@ -14,7 +14,7 @@ buildscript {
 	}
 
 	dependencies {
-		classpath 'com.diffplug.gradle:goomph:1.2.0-SNAPSHOT'
+		classpath 'com.diffplug.gradle:goomph:1.2.0'
 		classpath "com.diffplug.durian:durian-swt:${VER_DURIAN_SWT}"
 	}
 }
@@ -151,4 +151,28 @@ tasks.withType(FindBugs) {
 dependencies {
 	compile 'com.google.code.findbugs:annotations:3.0.0'
 	compile 'com.google.code.findbugs:jsr305:3.0.0'
+}
+
+/////////////////////////
+// INTERACTIVE TESTING //
+/////////////////////////
+
+// setup the test categories
+test {
+	useJUnit {
+		excludeCategories 'com.diffplug.common.swt.InteractiveTest'
+	}
+}
+task interactiveTest(type: Test) {
+	systemProperty 'com.diffplug.test.autoclose', null
+	useJUnit {
+		includeCategories 'com.diffplug.common.swt.InteractiveTest'
+	}
+}
+task headlessTest(type: Test) {
+	systemProperty 'com.diffplug.test.autoclose.milliseconds', '500'
+	useJUnit {
+		includeCategories 'com.diffplug.common.swt.InteractiveTest'
+	}
+	test.ignoreFailures false
 }
