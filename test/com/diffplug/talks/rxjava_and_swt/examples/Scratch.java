@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 DiffPlug
+ * Copyright 2016 DiffPlug
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package com.diffplug.talks.rxjava_and_swt.examples;
 
-import com.diffplug.common.swt.SwtExec;
-
 import rx.Subscription;
+
+import com.diffplug.common.swt.SwtExec;
 
 // @formatter:off
 public class Scratch {

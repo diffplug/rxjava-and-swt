@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 DiffPlug
+ * Copyright 2016 DiffPlug
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,13 +23,13 @@ import org.eclipse.swt.widgets.Text;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import rx.subjects.BehaviorSubject;
+
 import com.diffplug.common.rx.Rx;
 import com.diffplug.common.rx.RxBox;
 import com.diffplug.common.swt.InteractiveTest;
 import com.diffplug.common.swt.Layouts;
 import com.diffplug.common.swt.SwtRx;
-
-import rx.subjects.BehaviorSubject;
 
 @Category(InteractiveTest.class)
 public class EventVsFrpTwoWay {
