@@ -83,7 +83,7 @@ public class XkcdColorPicker extends ControlWrapper.AroundControl<Composite> {
 		CancelIfStale cancelling = new CancelIfStale();
 
 		SwtExec.Guarded guarded = SwtExec.async().guardOn(parent);
-		guarded.subscribe(rxRgb.throttleFirst(250, TimeUnit.MILLISECONDS), rgb -> {
+		guarded.subscribe(rxRgb, rgb -> {
 			// set raw
 			colorCompare.setActual(rgb);
 			// clear empty, then start to look for the answer
