@@ -176,3 +176,11 @@ task headlessTest(type: Test) {
 	}
 	test.ignoreFailures false
 }
+if (com.diffplug.common.swt.os.OS.getNative().isMac()) {
+	gradle.taskGraph.whenReady { taskGraph ->
+		if (taskGraph.hasTask(interactiveTest) || taskGraph.hasTask(headlessTest)) {
+			logger.error('gradle does not support running SWT from the command line on mac\n' +
+				'see here for a workaround: https://github.com/ReadyTalk/swt-bling/issues/4')
+		}
+	}
+}
