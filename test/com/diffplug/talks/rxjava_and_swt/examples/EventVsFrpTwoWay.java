@@ -29,6 +29,8 @@ import com.diffplug.common.swt.InteractiveTest;
 import com.diffplug.common.swt.Layouts;
 import com.diffplug.common.swt.SwtRx;
 
+import rx.subjects.BehaviorSubject;
+
 @Category(InteractiveTest.class)
 public class EventVsFrpTwoWay {
 
@@ -101,28 +103,31 @@ public class EventVsFrpTwoWay {
 		}
 	}
 
+	/** Small modification which keeps it working better. */
 	public static class FrpBased extends IntValue {
-		final RxBox<Integer> value = RxBox.of(0);
+		final BehaviorSubject<Integer> value;
 
 		public FrpBased(Composite parent, int initialValue) {
 			super(parent, initialValue);
-			inputField.addListener(SWT.Modify, e -> {
+			value = BehaviorSubject.create(initialValue);
+			RxBox<String> rwText = SwtRx.textImmediate(inputField);
+			Rx.subscribe(rwText, text -> {
 				try {
-					int parsed = Integer.parseInt(inputField.getText());
-					value.set(parsed);
+					int parsed = Integer.parseInt(text);
+					value.onNext(parsed);
 				} catch (Exception error) {
 					outputField.setText(msgForError(error));
 				}
 			});
 			scale.addListener(SWT.Selection, e -> {
-				value.set(scale.getSelection());
+				value.onNext(scale.getSelection());
 			});
-			Rx.subscribe(value.map(Object::toString), inputField::setText);
+			Rx.subscribe(value.map(Object::toString), rwText::set);
 			Rx.subscribe(value.map(this::msgForValue), outputField::setText);
 			Rx.subscribe(value, scale::setSelection);
 		}
 
-		public RxBox<Integer> rwValue() {
+		public BehaviorSubject<Integer> rwValue() {
 			return value;
 		}
 	}
@@ -138,41 +143,6 @@ public class EventVsFrpTwoWay {
 	public void frpBased() {
 		InteractiveTest.testCoat("FRP-based example", 20, 0, cmp -> {
 			new FrpBased(cmp, 10);
-		});
-	}
-
-	/** Small modification which keeps it working better. */
-	public static class FrpBasedMaintainSelection extends IntValue {
-		final RxBox<Integer> value = RxBox.of(0);
-
-		public FrpBasedMaintainSelection(Composite parent, int initialValue) {
-			super(parent, initialValue);
-			RxBox<String> rwText = SwtRx.textImmediate(inputField);
-			Rx.subscribe(rwText, text -> {
-				try {
-					int parsed = Integer.parseInt(text);
-					value.set(parsed);
-				} catch (Exception error) {
-					outputField.setText(msgForError(error));
-				}
-			});
-			scale.addListener(SWT.Selection, e -> {
-				value.set(scale.getSelection());
-			});
-			Rx.subscribe(value.map(Object::toString), rwText::set);
-			Rx.subscribe(value.map(this::msgForValue), outputField::setText);
-			Rx.subscribe(value, scale::setSelection);
-		}
-
-		public RxBox<Integer> rwValue() {
-			return value;
-		}
-	}
-
-	@Test
-	public void frpBasedMaintainSelection() {
-		InteractiveTest.testCoat("FRP-based which maintains selection example", 20, 0, cmp -> {
-			new FrpBasedMaintainSelection(cmp, 10);
 		});
 	}
 }

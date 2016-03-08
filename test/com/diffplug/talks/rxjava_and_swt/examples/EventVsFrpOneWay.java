@@ -22,14 +22,14 @@ import org.eclipse.swt.widgets.Text;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import rx.Observable;
-import rx.subjects.BehaviorSubject;
-
 import com.diffplug.common.base.Either;
 import com.diffplug.common.rx.Rx;
 import com.diffplug.common.swt.InteractiveTest;
 import com.diffplug.common.swt.Layouts;
 import com.diffplug.common.swt.SwtRx;
+
+import rx.Observable;
+import rx.subjects.BehaviorSubject;
 
 @Category(InteractiveTest.class)
 public class EventVsFrpOneWay {
@@ -75,7 +75,7 @@ public class EventVsFrpOneWay {
 	public static class FrpBased extends IntValue {
 		public FrpBased(Composite parent, int initialValue) {
 			super(parent, initialValue);
-			BehaviorSubject<Integer> value = BehaviorSubject.create();
+			BehaviorSubject<Integer> value = BehaviorSubject.create(initialValue);
 			inputField.addListener(SWT.Modify, e -> {
 				try {
 					int parsed = Integer.parseInt(inputField.getText());
