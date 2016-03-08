@@ -17,16 +17,18 @@ package com.diffplug.talks.rxjava_and_swt;
 
 import org.eclipse.swt.graphics.RGB;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import com.diffplug.common.swt.InteractiveTest;
 import com.diffplug.common.swt.Layouts;
 
+@Category(InteractiveTest.class)
 public class XkcdColorPickerTest {
 	/** Feature for picking colors. */
 	@Test
 	public void colorPicker() {
 		final int SCALE = 4;
-		InteractiveTest.testCoat("Selects colors in a fancy way.", 16 * SCALE, 9 * SCALE, cmp -> {
+		InteractiveTest.testCoat("Selects colors using XKCD color survey data.", 16 * SCALE, 9 * SCALE, cmp -> {
 			Layouts.setFill(cmp).margin(0);
 			new XkcdColorPicker(cmp, new RGB(100, 50, 150));
 		});

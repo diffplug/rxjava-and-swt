@@ -20,10 +20,10 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Widget;
 import org.junit.Test;
 
+import rx.Observable;
+
 import com.diffplug.common.swt.SwtRx;
 import com.diffplug.common.swt.jface.Actions;
-
-import rx.Observable;
 
 public class EventVsFrp {
 	@Test(expected = ClassCastException.class)
