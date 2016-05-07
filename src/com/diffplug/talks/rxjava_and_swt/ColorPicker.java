@@ -32,7 +32,7 @@ import com.diffplug.common.swt.ControlWrapper;
 import com.diffplug.common.swt.SwtRx;
 
 /** Shows a pane of CbCr at constant Y. */
-public class ColorPicker extends ControlWrapper.AroundControl<Canvas>implements ColorPickerApis.Reactive {
+public class ColorPicker extends ControlWrapper.AroundControl<Canvas> implements ColorPickerApis.Reactive {
 	int luminance = 128;
 
 	final Observable<RGB> mouseDown, mouseMove;

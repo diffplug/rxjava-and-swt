@@ -15,8 +15,6 @@
  */
 package com.diffplug.talks.rxjava_and_swt;
 
-import java.util.concurrent.TimeUnit;
-
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Composite;
@@ -32,10 +30,6 @@ import com.diffplug.common.swt.Layouts;
 import com.diffplug.common.swt.SwtExec;
 
 public class XkcdColorPicker extends ControlWrapper.AroundControl<Composite> {
-	final RxBox<RGB> rgb = RxBox.of(new RGB(0, 0, 0));
-	final RxBox<RGB> yCbCr = rgb.map(ColorPicker::toYCbCr, ColorPicker::fromYCbCr);
-	final XkcdColors xkcd = XkcdColors.load();
-
 	public XkcdColorPicker(Composite parent, RGB initRGB) {
 		super(new Composite(parent, SWT.NONE));
 		RGB initYCbCr = ColorPicker.toYCbCr(initRGB);

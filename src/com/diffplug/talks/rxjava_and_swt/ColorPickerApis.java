@@ -19,9 +19,11 @@ import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Listener;
 
 import rx.Observable;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 // @formatter:off
 // to keep the spacing tight for the slides
+@SuppressFBWarnings(value="UUF_UNUSED_FIELD", justification="It's just for slides, not computation")
 public interface ColorPickerApis {
 	public interface ExposeDetails {
 		/** Adds the given listener to the color canvas (MouseMove, MouseDown, etc). */
