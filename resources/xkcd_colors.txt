@@ -573,7 +573,7 @@ bright turquoise	0ffef9
 red pink	fa2a55
 red purple	820747
 greyish brown	7a6a4f
-vermillion	f4320c
+vermilion	f4320c
 russet	a13905
 steel grey	6f828a
 lighter purple	a55af4
