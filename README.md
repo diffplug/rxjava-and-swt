@@ -16,6 +16,10 @@ output = [
 [![Live chat](https://img.shields.io/badge/gitter-live_chat-brightgreen.svg)](https://gitter.im/diffplug/durian)
 <!---freshmark /shields -->
 
+Presented at [EclipseCon NA 2016](https://www.eclipsecon.org/na2016/session/rxjava-and-swt-out-events-frp).
+
+Recording is available on [InfoQ](https://www.infoq.com/presentations/rxjava-swt).
+
 ## Acknowledgements
 
 * Thanks to Randall Munroe for his excellent [color survey](http://blog.xkcd.com/2010/05/03/color-survey-results/) from [XKCD](http://www.xkcd.com/).
